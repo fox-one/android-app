@@ -6,6 +6,7 @@ import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.lifecycle.lifecycleScope
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.fragment_verify_pin.*
@@ -52,11 +53,17 @@ class VerifyFragment : BaseFragment(), PinView.OnPinListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         close_iv.setOnClickListener { activity?.onBackPressed() }
         pin.setListener(this)
         keyboard.setKeyboardKeys(KEYS)
         keyboard.setOnClickKeyboardListener(keyboardListener)
         keyboard.animate().translationY(0f).start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 
     override fun onUpdate(index: Int) {

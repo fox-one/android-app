@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.lifecycle.ViewModelProvider
 import com.uber.autodispose.autoDispose
 import javax.inject.Inject
@@ -77,6 +78,7 @@ class WalletPasswordFragment : BaseFragment(), PinView.OnPinListener {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         if (change) {
             title_view.setSubTitle(getString(R.string.wallet_password_set_new_pin), "2/5")
             tip_tv.text = getString(R.string.wallet_password_set_new_pin_desc)
@@ -97,6 +99,11 @@ class WalletPasswordFragment : BaseFragment(), PinView.OnPinListener {
         keyboard.setKeyboardKeys(Constants.KEYS)
         keyboard.setOnClickKeyboardListener(keyboardListener)
         keyboard.animate().translationY(0f).start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 
     override fun onUpdate(index: Int) {

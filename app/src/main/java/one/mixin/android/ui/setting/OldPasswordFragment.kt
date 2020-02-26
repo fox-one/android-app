@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import javax.inject.Inject
@@ -45,6 +46,7 @@ class OldPasswordFragment : BaseFragment(), PinView.OnPinListener {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         title_view.setSubTitle(getString(R.string.wallet_password_old_title), "1/5")
         title_view.left_ib.setOnClickListener { activity?.onBackPressed() }
         title_view.right_animator.setOnClickListener { verify(pin.code()) }
@@ -53,6 +55,11 @@ class OldPasswordFragment : BaseFragment(), PinView.OnPinListener {
         keyboard.setKeyboardKeys(KEYS)
         keyboard.setOnClickKeyboardListener(keyboardListener)
         keyboard.animate().translationY(0f).start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 
     override fun onUpdate(index: Int) {

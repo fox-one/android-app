@@ -71,7 +71,7 @@ class ConfirmBottomFragment : MixinBottomSheetDialogFragment() {
     lateinit var provisioningService: ProvisioningService
 
     private val url: String by lazy {
-        arguments!!.getString(AvatarActivity.ARGS_URL)!!
+        requireArguments().getString(AvatarActivity.ARGS_URL)!!
     }
 
     @SuppressLint("RestrictedApi")

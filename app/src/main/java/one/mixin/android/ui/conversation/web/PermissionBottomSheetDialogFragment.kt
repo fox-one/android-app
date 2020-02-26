@@ -51,10 +51,10 @@ class PermissionBottomSheetDialogFragment : MixinBottomSheetDialogFragment() {
     }
 
     private val appName: String? by lazy {
-        arguments!!.getString(WebBottomSheetDialogFragment.APP_NAME)
+        requireArguments().getString(WebBottomSheetDialogFragment.APP_NAME)
     }
     private val appAvatar: String? by lazy {
-        arguments!!.getString(WebBottomSheetDialogFragment.APP_AVATAR)
+        requireArguments().getString(WebBottomSheetDialogFragment.APP_AVATAR)
     }
 
     private val miniHeight by lazy {

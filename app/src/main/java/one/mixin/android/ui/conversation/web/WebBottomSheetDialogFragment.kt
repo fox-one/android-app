@@ -139,22 +139,22 @@ class WebBottomSheetDialogFragment : MixinBottomSheetDialogFragment() {
     }
 
     private val url: String by lazy {
-        arguments!!.getString(URL)!!
+        requireArguments().getString(URL)!!
     }
     private val conversationId: String? by lazy {
-        arguments!!.getString(CONVERSATION_ID)
+        requireArguments().getString(CONVERSATION_ID)
     }
     private val appId: String? by lazy {
-        arguments!!.getString(APP_ID) ?: app?.appId
+        requireArguments().getString(APP_ID) ?: app?.appId
     }
     private val appName: String? by lazy {
-        arguments!!.getString(APP_NAME) ?: app?.name
+        requireArguments().getString(APP_NAME) ?: app?.name
     }
     private val appAvatar: String? by lazy {
-        arguments!!.getString(APP_AVATAR) ?: app?.icon_url
+        requireArguments().getString(APP_AVATAR) ?: app?.icon_url
     }
     private val appCapabilities: ArrayList<String>? by lazy {
-        arguments!!.getStringArrayList(APP_CAPABILITIES) ?: app?.capabilities
+        requireArguments().getStringArrayList(APP_CAPABILITIES) ?: app?.capabilities
     }
 
     private var app: App? = null

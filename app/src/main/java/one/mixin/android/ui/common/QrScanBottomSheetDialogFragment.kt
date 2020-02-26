@@ -36,8 +36,8 @@ class QrScanBottomSheetDialogFragment : MixinBottomSheetDialogFragment() {
         }
     }
 
-    private val text: String by lazy { arguments!!.getString(ARGS_TEXT)!! }
-    private val conversationId: String? by lazy { arguments!!.getString(ARGS_CONVERSATION_ID) }
+    private val text: String by lazy { requireArguments().getString(ARGS_TEXT)!! }
+    private val conversationId: String? by lazy { requireArguments().getString(ARGS_CONVERSATION_ID) }
 
     @SuppressLint("RestrictedApi")
     override fun setupDialog(dialog: Dialog, style: Int) {

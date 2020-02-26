@@ -694,7 +694,7 @@ class ConversationFragment : LinkFragment(), OnKeyboardShownListener, OnKeyboard
     private fun createImageUri() = Uri.fromFile(context?.getImagePath()?.createImageTemp())
 
     private val conversationId: String by lazy<String> {
-        var cid = arguments!!.getString(CONVERSATION_ID)
+        var cid = requireArguments().getString(CONVERSATION_ID)
         if (cid.isNullOrBlank()) {
             isFirstMessage = true
             cid = generateConversationId(sender.userId, recipient!!.userId)
@@ -713,11 +713,11 @@ class ConversationFragment : LinkFragment(), OnKeyboardShownListener, OnKeyboard
     }
 
     private val messageId: String? by lazy {
-        arguments!!.getString(MESSAGE_ID, null)
+        requireArguments().getString(MESSAGE_ID, null)
     }
 
     private val keyword: String? by lazy {
-        arguments!!.getString(KEY_WORD, null)
+        requireArguments().getString(KEY_WORD, null)
     }
 
     private val sender: User by lazy { Session.getAccount()!!.toUser() }
@@ -754,7 +754,7 @@ class ConversationFragment : LinkFragment(), OnKeyboardShownListener, OnKeyboard
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         registerHeadsetPlugReceiver()
-        recipient = arguments!!.getParcelable<User?>(RECIPIENT)
+        recipient = requireArguments().getParcelable<User?>(RECIPIENT)
     }
 
     override fun onCreateView(
@@ -765,7 +765,7 @@ class ConversationFragment : LinkFragment(), OnKeyboardShownListener, OnKeyboard
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        val messages = arguments!!.getParcelableArrayList<ForwardMessage>(MESSAGES)
+        val messages = requireArguments().getParcelableArrayList<ForwardMessage>(MESSAGES)
         if (messages != null) {
             sendForwardMessages(messages)
         } else {

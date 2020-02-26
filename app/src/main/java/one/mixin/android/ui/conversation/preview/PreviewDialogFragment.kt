@@ -41,7 +41,7 @@ class PreviewDialogFragment : DialogFragment(), VideoTimelineView.VideoTimelineV
     }
 
     private val isVideo by lazy {
-        arguments!!.getBoolean(IS_VIDEO)
+        requireArguments().getBoolean(IS_VIDEO)
     }
 
     private var currentState = false

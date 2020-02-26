@@ -3,6 +3,7 @@ package one.mixin.android.ui.common.biometric
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.core.view.postDelayed
 import androidx.lifecycle.lifecycleScope
 import kotlinx.android.synthetic.main.fragment_transfer_bottom_sheet.view.*
@@ -29,6 +30,7 @@ abstract class BiometricBottomSheetDialogFragment : MixinBottomSheetDialogFragme
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        dialog?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         contentView.title_view.right_iv.setOnClickListener { dismiss() }
         contentView.biometric_layout.setKeyboard(contentView.keyboard)
         contentView.biometric_layout.callback = biometricLayoutCallback
@@ -46,6 +48,7 @@ abstract class BiometricBottomSheetDialogFragment : MixinBottomSheetDialogFragme
 
     override fun onDestroyView() {
         super.onDestroyView()
+        dialog?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         if (dismissRunnable != null) {
             contentView.removeCallbacks(dismissRunnable)
             callback?.onSuccess()

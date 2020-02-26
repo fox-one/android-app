@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -56,6 +57,7 @@ class PinCheckDialogFragment : DialogFragment(), Injectable {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        dialog?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         contentView.pin.setListener(object : PinView.OnPinListener {
             override fun onUpdate(index: Int) {
                 if (index == contentView.pin.getCount()) {
@@ -67,6 +69,11 @@ class PinCheckDialogFragment : DialogFragment(), Injectable {
         contentView.keyboard.setKeyboardKeys(KEYS)
         contentView.keyboard.setOnClickKeyboardListener(mKeyboardListener)
         contentView.keyboard.animate().translationY(0f).start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dialog?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 
     private fun verify(pinCode: String) = lifecycleScope.launch {

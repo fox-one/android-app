@@ -7,6 +7,7 @@ import android.text.TextUtils
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import java.math.BigDecimal
 import kotlinx.android.synthetic.main.fragment_transfer_bottom_sheet.view.*
 import kotlinx.android.synthetic.main.layout_pin_biometric.view.*
 import one.mixin.android.Constants
@@ -28,7 +29,6 @@ import one.mixin.android.util.Session
 import one.mixin.android.vo.Fiats
 import one.mixin.android.widget.BottomSheet
 import org.jetbrains.anko.textSizeDimen
-import java.math.BigDecimal
 
 class TransferBottomSheetDialogFragment : ValuableBiometricBottomSheetDialogFragment<BiometricItem>() {
 

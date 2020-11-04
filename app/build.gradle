@@ -271,6 +271,7 @@ dependencies {
     implementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
     implementation "com.twilio:audioswitch:$audioSwitchVersion"
+    implementation "org.chromium.net:cronet-fallback:76.3809.111"
 
     ktlint "com.pinterest:ktlint:${ktlintVersion}"
 

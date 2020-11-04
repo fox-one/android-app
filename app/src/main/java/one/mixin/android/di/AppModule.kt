@@ -6,7 +6,6 @@ import android.provider.Settings
 import com.birbit.android.jobqueue.config.Configuration
 import com.birbit.android.jobqueue.scheduling.FrameworkJobSchedulerService
 import com.google.firebase.iid.FirebaseInstanceId
-import com.google.gson.JsonSyntaxException
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import com.twilio.audioswitch.AudioDevice
 import com.twilio.audioswitch.AudioSwitch
@@ -15,21 +14,14 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ApplicationComponent
+import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
-import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import one.mixin.android.BuildConfig
-import one.mixin.android.Constants
-import one.mixin.android.Constants.ALLOW_INTERVAL
 import one.mixin.android.Constants.API.FOURSQUARE_URL
 import one.mixin.android.Constants.API.GIPHY_URL
 import one.mixin.android.Constants.API.URL
 import one.mixin.android.Constants.DNS
-import one.mixin.android.MixinApplication
-import one.mixin.android.api.ExpiredTokenException
-import one.mixin.android.api.MixinResponse
-import one.mixin.android.api.NetworkException
-import one.mixin.android.api.ServerErrorException
 import one.mixin.android.api.service.AccountService
 import one.mixin.android.api.service.AddressService
 import one.mixin.android.api.service.AssetService
@@ -51,46 +43,36 @@ import one.mixin.android.db.JobDao
 import one.mixin.android.db.MessageDao
 import one.mixin.android.db.OffsetDao
 import one.mixin.android.extension.filterNonAscii
-import one.mixin.android.extension.networkConnected
-import one.mixin.android.extension.show
 import one.mixin.android.job.BaseJob
 import one.mixin.android.job.JobLogger
 import one.mixin.android.job.JobNetworkUtil
 import one.mixin.android.job.MixinJobManager
 import one.mixin.android.job.MyJobService
-import one.mixin.android.session.JwtResult
-import one.mixin.android.session.Session
-import one.mixin.android.util.ErrorHandler.Companion.AUTHENTICATION
-import one.mixin.android.util.ErrorHandler.Companion.OLD_VERSION
-import one.mixin.android.util.GsonHelper
 import one.mixin.android.util.LiveDataCallAdapterFactory
-import one.mixin.android.util.reportException
+import one.mixin.android.util.cronet.CronetInterceptor
 import one.mixin.android.vo.CallStateLiveData
 import one.mixin.android.vo.LinkState
 import one.mixin.android.websocket.ChatWebSocket
+import org.chromium.net.CronetEngine
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
-import kotlin.math.abs
 
 @InstallIn(ApplicationComponent::class)
 @Module(includes = [(BaseDbModule::class)])
 object AppModule {
 
-    private val LOCALE = Locale.getDefault().language + "-" + Locale.getDefault().country
-    private val API_UA = (
+    val LOCALE = Locale.getDefault().language + "-" + Locale.getDefault().country
+    val API_UA = (
         "Mixin/" + BuildConfig.VERSION_NAME +
             " (Android " + android.os.Build.VERSION.RELEASE + "; " + android.os.Build.FINGERPRINT + "; " + LOCALE + ")"
         ).filterNonAscii()
 
-    private fun getDeviceId(resolver: ContentResolver): String {
+    fun getDeviceId(resolver: ContentResolver): String {
         var deviceId = Settings.Secure.getString(resolver, Settings.Secure.ANDROID_ID)
         if (deviceId == null || deviceId == "9774d56d682e549c") {
             deviceId = FirebaseInstanceId.getInstance().id
@@ -111,8 +93,14 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideOkHttp(resolver: ContentResolver, httpLoggingInterceptor: HttpLoggingInterceptor?): OkHttpClient {
+    fun provideOkHttp(
+        resolver: ContentResolver,
+        cronetEngine: CronetEngine,
+        httpLoggingInterceptor: HttpLoggingInterceptor?,
+    ): OkHttpClient {
         val builder = OkHttpClient.Builder()
+        val dispatcher = Dispatcher()
+        builder.dispatcher(dispatcher)
         builder.addInterceptor(HostSelectionInterceptor.get())
         httpLoggingInterceptor?.let { interceptor ->
             builder.addNetworkInterceptor(interceptor)
@@ -123,83 +111,7 @@ object AppModule {
         builder.pingInterval(15, TimeUnit.SECONDS)
         builder.retryOnConnectionFailure(false)
         builder.dns(DNS)
-
-        builder.addInterceptor { chain ->
-            val sourceRequest = chain.request()
-            val request = sourceRequest.newBuilder()
-                .addHeader("User-Agent", API_UA)
-                .addHeader("Accept-Language", Locale.getDefault().language)
-                .addHeader("Mixin-Device-Id", getDeviceId(resolver))
-                .addHeader("Authorization", "Bearer ${Session.signToken(Session.getAccount(), sourceRequest)}")
-                .build()
-            if (MixinApplication.appContext.networkConnected()) {
-                var response = try {
-                    chain.proceed(request)
-                } catch (e: Exception) {
-                    throw e.apply {
-                        if (this is SocketTimeoutException || this is UnknownHostException || this is ConnectException) {
-                            HostSelectionInterceptor.get().switch(request)
-                        }
-                    }
-                }
-
-                if (!response.isSuccessful) {
-                    val code = response.code
-                    if (code in 501..599) {
-                        HostSelectionInterceptor.get().switch(request)
-                        throw ServerErrorException(code)
-                    } else if (code == 500) {
-                        throw ServerErrorException(code)
-                    }
-                }
-
-                var jwtResult: JwtResult? = null
-                response.body?.run {
-                    val bytes = this.bytes()
-                    val contentType = this.contentType()
-                    val body = bytes.toResponseBody(contentType)
-                    response = response.newBuilder().body(body).build()
-                    if (bytes.isEmpty()) return@run
-                    val mixinResponse = try {
-                        GsonHelper.customGson.fromJson(String(bytes), MixinResponse::class.java)
-                    } catch (e: JsonSyntaxException) {
-                        HostSelectionInterceptor.get().switch(request)
-                        throw ServerErrorException(response.code)
-                    }
-                    if (mixinResponse.errorCode == OLD_VERSION) {
-                        MixinApplication.get().gotoOldVersionAlert()
-                        return@run
-                    } else if (mixinResponse.errorCode != AUTHENTICATION) return@run
-                    val authorization = response.request.header("Authorization")
-                    if (!authorization.isNullOrBlank() && authorization.startsWith("Bearer ")) {
-                        val jwt = authorization.substring(7)
-                        jwtResult = Session.requestDelay(Session.getAccount(), jwt, Constants.DELAY_SECOND)
-                        if (jwtResult?.isExpire == true) {
-                            throw ExpiredTokenException()
-                        }
-                    }
-                }
-
-                if (MixinApplication.get().onlining.get()) {
-                    response.header("X-Server-Time")?.toLong()?.let { serverTime ->
-                        val currentTime = System.currentTimeMillis()
-                        if (abs(serverTime / 1000000 - System.currentTimeMillis()) >= ALLOW_INTERVAL) {
-                            MixinApplication.get().gotoTimeWrong(serverTime)
-                        } else if (jwtResult?.isExpire == false) {
-                            jwtResult?.serverTime = serverTime / 1000000000
-                            jwtResult?.currentTime = currentTime / 1000
-                            val ise = IllegalStateException("Force logout. $jwtResult. request: ${request.show()}, response: ${response.show()}")
-                            reportException(ise)
-                            MixinApplication.get().closeAndClear()
-                        }
-                    }
-                }
-
-                return@addInterceptor response
-            } else {
-                throw NetworkException()
-            }
-        }
+        builder.addInterceptor(CronetInterceptor(resolver, cronetEngine, dispatcher.executorService))
         return builder.build()
     }
 
@@ -214,6 +126,19 @@ object AppModule {
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttp)
         return builder.build()
+    }
+
+    @Singleton
+    @Provides
+    fun provideCronetEngine(app: Application): CronetEngine {
+        val cacheDir = app.applicationContext.cacheDir.resolve("cronet-cache")
+        cacheDir.mkdir()
+        return CronetEngine.Builder(app.applicationContext)
+            // .enableHttp2(false)
+            .enableQuic(true)
+            .setStoragePath(cacheDir.path)
+            // .enableBrotli(true)
+            .build()
     }
 
     @Singleton

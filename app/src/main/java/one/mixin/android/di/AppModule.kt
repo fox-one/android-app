@@ -3,6 +3,7 @@ package one.mixin.android.di
 import android.app.Application
 import android.content.ContentResolver
 import android.provider.Settings
+import androidx.core.net.toUri
 import com.birbit.android.jobqueue.config.Configuration
 import com.birbit.android.jobqueue.scheduling.FrameworkJobSchedulerService
 import com.google.firebase.iid.FirebaseInstanceId
@@ -20,6 +21,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import one.mixin.android.BuildConfig
 import one.mixin.android.Constants.API.FOURSQUARE_URL
 import one.mixin.android.Constants.API.GIPHY_URL
+import one.mixin.android.Constants.API.Mixin_URL
 import one.mixin.android.Constants.API.URL
 import one.mixin.android.Constants.DNS
 import one.mixin.android.api.service.AccountService
@@ -144,7 +146,9 @@ object AppModule {
         val cacheDir = app.applicationContext.cacheDir.resolve("cronet-cache")
         cacheDir.mkdir()
         return ExperimentalCronetEngine.Builder(app.applicationContext)
-            .enableNetworkQualityEstimator(true)
+            // .enableNetworkQualityEstimator(true)
+            .addQuicHint(URL.toUri().host, 443, 443)
+            .addQuicHint(Mixin_URL.toUri().host, 443, 443)
             .enableHttp2(true)
             .enableQuic(true)
             .setStoragePath(cacheDir.path)

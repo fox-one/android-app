@@ -707,12 +707,10 @@ internal constructor(
                 if (keyword.isNullOrEmpty() || keyword.length < 3) {
                     emptyList()
                 } else {
-                    measureTimeMillis("Test") {
-                        userRepository.fuzzySearchBotGroupUser(
-                            conversationId,
-                            keyword
-                        )
-                    }
+                    userRepository.fuzzySearchBotGroupUser(
+                        conversationId,
+                        keyword
+                    )
                 }
             }
         }

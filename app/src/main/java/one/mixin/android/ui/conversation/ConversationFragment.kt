@@ -1277,6 +1277,8 @@ class ConversationFragment() :
         } else {
             renderUser(recipient!!)
         }
+        binding.mentionRv.adapter = mentionAdapter
+        binding.mentionRv.layoutManager = LinearLayoutManager(context)
 
         binding.flagLayout.downFlagLayout.setOnClickListener {
             if (binding.chatRv.scrollState == RecyclerView.SCROLL_STATE_SETTLING) {
@@ -1923,8 +1925,6 @@ class ConversationFragment() :
                     }
                 }
             )
-        binding.mentionRv.adapter = mentionAdapter
-        binding.mentionRv.layoutManager = LinearLayoutManager(context)
     }
 
     @Suppress("SameParameterValue")
@@ -2670,7 +2670,7 @@ class ConversationFragment() :
         }
 
         override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-            if (isGroup) {
+            if (isGroup || isBot) {
                 if (binding.mentionRv.adapter != null && !s.isNullOrEmpty() && mentionDisplay(s)) {
                     searchMentionUser(s.toString())
                     binding.mentionRv.layoutManager?.smoothScrollToPosition(binding.mentionRv, null, 0)
@@ -2686,7 +2686,11 @@ class ConversationFragment() :
     private fun searchMentionUser(keyword: String) {
         chatViewModel.viewModelScope.launch {
             val mention = mentionEnd(keyword)
-            val users = chatViewModel.fuzzySearchUser(conversationId, mention)
+            val users = if (isBot) {
+                chatViewModel.fuzzySearchBotGroupUser(conversationId, mention)
+            } else {
+                chatViewModel.fuzzySearchUser(conversationId, mention)
+            }
             mentionAdapter.keyword = mention
             mentionAdapter.submitList(users)
             if (binding.mentionRv.isGone) {

@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.birbit.android.jobqueue.Params
 import kotlinx.coroutines.runBlocking
-import one.mixin.android.Constants
+import one.mixin.android.Constants.Account.PREF_BACKUP
 import one.mixin.android.Constants.BackUp.BACKUP_LAST_TIME
 import one.mixin.android.Constants.BackUp.BACKUP_PERIOD
 import one.mixin.android.MixinApplication
@@ -43,14 +43,14 @@ class BackupJob(private val force: Boolean = false) : BaseJob(
         val backupLiveData = BackupLiveData()
     }
 
-    override fun onRun() {
+    override fun onRun() = runBlocking {
         val context = MixinApplication.appContext
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            return
+            return@runBlocking
         }
         if (force) {
             backup(context)
-        } else if (context.defaultSharedPreferences.getBoolean(Constants.Account.PREF_BACKUP, false)) {
+        } else if (propertyDao.findValueByKey(PREF_BACKUP)?.toBoolean() == true) {
             val option = context.defaultSharedPreferences.getInt(BACKUP_PERIOD, 0)
             if (option in 1..3) {
                 val currentTime = System.currentTimeMillis()

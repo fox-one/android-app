@@ -32,6 +32,7 @@ import one.mixin.android.db.MixinDatabaseMigrations.Companion.MIGRATION_31_32
 import one.mixin.android.db.MixinDatabaseMigrations.Companion.MIGRATION_32_33
 import one.mixin.android.db.MixinDatabaseMigrations.Companion.MIGRATION_33_34
 import one.mixin.android.db.MixinDatabaseMigrations.Companion.MIGRATION_34_35
+import one.mixin.android.db.MixinDatabaseMigrations.Companion.MIGRATION_35_36
 import one.mixin.android.vo.Address
 import one.mixin.android.vo.App
 import one.mixin.android.vo.Asset
@@ -50,6 +51,7 @@ import one.mixin.android.vo.MessageMention
 import one.mixin.android.vo.Offset
 import one.mixin.android.vo.Participant
 import one.mixin.android.vo.ParticipantSession
+import one.mixin.android.vo.Property
 import one.mixin.android.vo.ResendMessage
 import one.mixin.android.vo.ResendSessionMessage
 import one.mixin.android.vo.SentSenderKey
@@ -90,7 +92,8 @@ import one.mixin.android.vo.User
         (MessageFts4::class),
         (Circle::class),
         (CircleConversation::class),
-        (Trace::class)
+        (Trace::class),
+        (Property::class),
     ],
     version = CURRENT_VERSION
 )
@@ -121,6 +124,7 @@ abstract class MixinDatabase : RoomDatabase() {
     abstract fun circleDao(): CircleDao
     abstract fun circleConversationDao(): CircleConversationDao
     abstract fun traceDao(): TraceDao
+    abstract fun propertyDao(): PropertyDao
 
     companion object {
         private var INSTANCE: MixinDatabase? = null
@@ -136,8 +140,9 @@ abstract class MixinDatabase : RoomDatabase() {
                     val builder = Room.databaseBuilder(context, MixinDatabase::class.java, DB_NAME)
                         .addMigrations(
                             MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21,
-                            MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28,
-                            MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35
+                            MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27,
+                            MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33,
+                            MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36,
                         )
                         .enableMultiInstanceInvalidation()
                         .addCallback(CALLBACK)

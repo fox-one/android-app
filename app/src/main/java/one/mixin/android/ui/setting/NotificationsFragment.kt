@@ -15,16 +15,15 @@ import one.mixin.android.R
 import one.mixin.android.api.handleMixinResponse
 import one.mixin.android.api.request.AccountUpdateRequest
 import one.mixin.android.databinding.FragmentNotificationsBinding
-import one.mixin.android.extension.defaultSharedPreferences
 import one.mixin.android.extension.indeterminateProgressDialog
 import one.mixin.android.extension.openNotificationSetting
-import one.mixin.android.extension.putBoolean
 import one.mixin.android.extension.supportsOreo
 import one.mixin.android.extension.toast
 import one.mixin.android.session.Session
 import one.mixin.android.ui.common.BaseFragment
 import one.mixin.android.ui.common.editDialog
 import one.mixin.android.util.ChannelManager
+import one.mixin.android.util.PropertyHelper
 import one.mixin.android.util.viewBinding
 import one.mixin.android.vo.Fiats
 
@@ -59,14 +58,16 @@ class NotificationsFragment : BaseFragment(R.layout.fragment_notifications) {
             }
             refreshLargeAmount(Session.getAccount()!!.transferConfirmationThreshold)
 
-            duplicateTransferSc.isChecked = defaultSharedPreferences.getBoolean(PREF_DUPLICATE_TRANSFER, true)
+            lifecycleScope.launch {
+                duplicateTransferSc.isChecked = PropertyHelper.findValueByKey(requireContext(), PREF_DUPLICATE_TRANSFER)?.toBoolean() ?: true
+                strangerTransferSc.isChecked = PropertyHelper.findValueByKey(requireContext(), PREF_STRANGER_TRANSFER)?.toBoolean() ?: true
+            }
             duplicateTransferSc.setOnCheckedChangeListener { _, isChecked ->
-                defaultSharedPreferences.putBoolean(PREF_DUPLICATE_TRANSFER, isChecked)
+                updateKeyValue(PREF_DUPLICATE_TRANSFER, isChecked.toString())
             }
 
-            strangerTransferSc.isChecked = defaultSharedPreferences.getBoolean(PREF_STRANGER_TRANSFER, true)
             strangerTransferSc.setOnCheckedChangeListener { _, isChecked ->
-                defaultSharedPreferences.putBoolean(PREF_STRANGER_TRANSFER, isChecked)
+                updateKeyValue(PREF_STRANGER_TRANSFER, isChecked.toString())
             }
 
             supportsOreo {
@@ -77,6 +78,10 @@ class NotificationsFragment : BaseFragment(R.layout.fragment_notifications) {
                 }
             }
         }
+    }
+
+    private fun updateKeyValue(key: String, value: String) = lifecycleScope.launch {
+        PropertyHelper.updateKeyValue(requireContext(), key, value)
     }
 
     @SuppressLint("RestrictedApi")

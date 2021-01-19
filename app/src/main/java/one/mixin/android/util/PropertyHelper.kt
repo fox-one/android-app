@@ -5,8 +5,18 @@ import one.mixin.android.Constants.Account.PREF_ATTACHMENT
 import one.mixin.android.Constants.Account.PREF_ATTACHMENT_LAST
 import one.mixin.android.Constants.Account.PREF_ATTACHMENT_OFFSET
 import one.mixin.android.Constants.Account.PREF_BACKUP
+import one.mixin.android.Constants.Account.PREF_DUPLICATE_TRANSFER
 import one.mixin.android.Constants.Account.PREF_FTS4_UPGRADE
+import one.mixin.android.Constants.Account.PREF_STRANGER_TRANSFER
 import one.mixin.android.Constants.Account.PREF_SYNC_FTS4_OFFSET
+import one.mixin.android.Constants.BackUp.BACKUP_LAST_TIME
+import one.mixin.android.Constants.BackUp.BACKUP_PERIOD
+import one.mixin.android.Constants.Download.AUTO_DOWNLOAD_MOBILE
+import one.mixin.android.Constants.Download.AUTO_DOWNLOAD_ROAMING
+import one.mixin.android.Constants.Download.AUTO_DOWNLOAD_WIFI
+import one.mixin.android.Constants.Download.MOBILE_DEFAULT
+import one.mixin.android.Constants.Download.ROAMING_DEFAULT
+import one.mixin.android.Constants.Download.WIFI_DEFAULT
 import one.mixin.android.db.MixinDatabase
 import one.mixin.android.db.PropertyDao
 import one.mixin.android.extension.defaultSharedPreferences
@@ -73,6 +83,22 @@ object PropertyHelper {
 
         val backup = pref.getBoolean(PREF_BACKUP, false)
         propertyDao.insertSuspend(Property(PREF_BACKUP, backup.toString(), updatedAt))
+        val period = pref.getInt(BACKUP_PERIOD, 0)
+        propertyDao.insertSuspend(Property(BACKUP_PERIOD, period.toString(), updatedAt))
+        val lastTime = pref.getLong(BACKUP_LAST_TIME, System.currentTimeMillis())
+        propertyDao.insertSuspend(Property(BACKUP_LAST_TIME, lastTime.toString(), updatedAt))
+
+        val duplicateTransfer = pref.getBoolean(PREF_DUPLICATE_TRANSFER, true)
+        propertyDao.insertSuspend(Property(PREF_DUPLICATE_TRANSFER, duplicateTransfer.toString(), updatedAt))
+        val strangerTransfer = pref.getBoolean(PREF_STRANGER_TRANSFER, true)
+        propertyDao.insertSuspend(Property(PREF_STRANGER_TRANSFER, strangerTransfer.toString(), updatedAt))
+
+        val autoWifi = pref.getInt(AUTO_DOWNLOAD_WIFI, WIFI_DEFAULT)
+        propertyDao.insertSuspend(Property(AUTO_DOWNLOAD_WIFI, autoWifi.toString(), updatedAt))
+        val autoMobile = pref.getInt(AUTO_DOWNLOAD_MOBILE, MOBILE_DEFAULT)
+        propertyDao.insertSuspend(Property(AUTO_DOWNLOAD_MOBILE, autoMobile.toString(), updatedAt))
+        val autoRoaming = pref.getInt(AUTO_DOWNLOAD_ROAMING, ROAMING_DEFAULT)
+        propertyDao.insertSuspend(Property(AUTO_DOWNLOAD_ROAMING, autoRoaming.toString(), updatedAt))
 
         propertyDao.insertSuspend(Property(PREF_PROPERTY_MIGRATED, true.toString(), updatedAt))
     }

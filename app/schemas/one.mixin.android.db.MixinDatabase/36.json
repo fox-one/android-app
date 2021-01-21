@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 36,
-    "identityHash": "5e2673df8d5c8bb9457859c86a132d42",
+    "identityHash": "c02342f3a0bbfcecedfc7ac670f656e1",
     "entities": [
       {
         "tableName": "users",
@@ -212,7 +212,19 @@
           ],
           "autoGenerate": false
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_conversations_category_status_pin_time_created_at",
+            "unique": false,
+            "columnNames": [
+              "category",
+              "status",
+              "pin_time",
+              "created_at"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_conversations_category_status_pin_time_created_at` ON `${TABLE_NAME}` (`category`, `status`, `pin_time`, `created_at`)"
+          }
+        ],
         "foreignKeys": []
       },
       {
@@ -1858,7 +1870,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5e2673df8d5c8bb9457859c86a132d42')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c02342f3a0bbfcecedfc7ac670f656e1')"
     ]
   }
 }

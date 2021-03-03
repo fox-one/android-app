@@ -59,6 +59,7 @@ import one.mixin.android.Constants.INTERVAL_24_HOURS
 import one.mixin.android.Constants.SAFETY_NET_INTERVAL_KEY
 import one.mixin.android.MixinApplication
 import one.mixin.android.R
+import one.mixin.android.ad.AdHttpHelper
 import one.mixin.android.api.handleMixinResponse
 import one.mixin.android.api.request.SessionRequest
 import one.mixin.android.api.service.ConversationService
@@ -224,7 +225,7 @@ class MainActivity : BlazeBaseActivity() {
         }
 
         if (!getIsLoaded(this, false) ||
-            !getIsSyncSession(this, false)
+                !getIsSyncSession(this, false)
         ) {
             InitializeActivity.showLoading(this, false)
             finish()
@@ -278,9 +279,9 @@ class MainActivity : BlazeBaseActivity() {
             }
 
             WorkManager.getInstance(this@MainActivity)
-                .enqueueUniqueOneTimeNetworkWorkRequest<RefreshContactWorker>("RefreshContactWorker")
+                    .enqueueUniqueOneTimeNetworkWorkRequest<RefreshContactWorker>("RefreshContactWorker")
             WorkManager.getInstance(this@MainActivity)
-                .enqueueUniqueOneTimeNetworkWorkRequest<RefreshFcmWorker>("RefreshFcmWorker")
+                    .enqueueUniqueOneTimeNetworkWorkRequest<RefreshFcmWorker>("RefreshFcmWorker")
             WorkManager.getInstance(this@MainActivity).pruneWork()
         }
         checkRoot()
@@ -293,6 +294,13 @@ class MainActivity : BlazeBaseActivity() {
         sendSafetyNetRequest()
         checkBatteryOptimization()
         refreshStickerAlbum()
+
+        checkAd()
+    }
+
+    private fun checkAd() {
+        AdHttpHelper.init(this.lifecycleScope, this)
+        AdHttpHelper.getAdInfo(binding.vAd)
     }
 
     override fun onStart() {
@@ -343,31 +351,31 @@ class MainActivity : BlazeBaseActivity() {
     private fun delayShowModifyMobile() = lifecycleScope.launch {
         delay(2000)
         MaterialAlertDialogBuilder(this@MainActivity, R.style.MixinAlertDialogTheme)
-            .setTitle(getString(R.string.setting_emergency_change_mobile))
-            .setPositiveButton(R.string.change) { dialog, _ ->
-                supportFragmentManager.inTransaction {
-                    setCustomAnimations(
-                        R.anim.slide_in_bottom,
-                        R.anim.slide_out_bottom,
-                        R.anim.slide_in_bottom,
-                        R.anim.slide_out_bottom
-                    )
-                        .add(R.id.root_view, VerifyFragment.newInstance(VerifyFragment.FROM_PHONE))
-                        .addToBackStack(null)
+                .setTitle(getString(R.string.setting_emergency_change_mobile))
+                .setPositiveButton(R.string.change) { dialog, _ ->
+                    supportFragmentManager.inTransaction {
+                        setCustomAnimations(
+                                R.anim.slide_in_bottom,
+                                R.anim.slide_out_bottom,
+                                R.anim.slide_in_bottom,
+                                R.anim.slide_out_bottom
+                        )
+                                .add(R.id.root_view, VerifyFragment.newInstance(VerifyFragment.FROM_PHONE))
+                                .addToBackStack(null)
+                        dialog.dismiss()
+                    }
+                }
+                .setNegativeButton(R.string.later) { dialog, _ ->
                     dialog.dismiss()
                 }
-            }
-            .setNegativeButton(R.string.later) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+                .show()
     }
 
     private fun checkRoot() {
         if (RootUtil.isDeviceRooted && defaultSharedPreferences.getBoolean(
-                Constants.Account.PREF_BIOMETRICS,
-                false
-            )
+                        Constants.Account.PREF_BIOMETRICS,
+                        false
+                )
         ) {
             BiometricUtil.deleteKey(this)
         }
@@ -379,18 +387,18 @@ class MainActivity : BlazeBaseActivity() {
         }
         runIntervalTask(SAFETY_NET_INTERVAL_KEY, INTERVAL_24_HOURS) {
             accountRepo.deviceCheck().subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .autoDispose(stopScope)
-                .subscribe(
-                    { resp ->
-                        resp.data?.let {
-                            val nonce = Base64.decode(it.nonce)
-                            validateSafetyNet(nonce)
-                        }
-                    },
-                    {
-                    }
-                )
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .autoDispose(stopScope)
+                    .subscribe(
+                            { resp ->
+                                resp.data?.let {
+                                    val nonce = Base64.decode(it.nonce)
+                                    validateSafetyNet(nonce)
+                                }
+                            },
+                            {
+                            }
+                    )
         }
     }
 
@@ -399,10 +407,10 @@ class MainActivity : BlazeBaseActivity() {
         val task = client.attest(nonce, BuildConfig.SafetyNet_API_KEY)
         task.addOnSuccessListener { safetyResp ->
             accountRepo.updateSession(SessionRequest(deviceCheckToken = safetyResp.jwsResult))
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .autoDispose(stopScope)
-                .subscribe({}, {})
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .autoDispose(stopScope)
+                    .subscribe({}, {})
         }
         task.addOnFailureListener { e ->
             Bugsnag.notify(e)
@@ -414,14 +422,14 @@ class MainActivity : BlazeBaseActivity() {
         val appUpdateInfoTask = appUpdateManager.appUpdateInfo
         appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
-                appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
+                    appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
             ) {
                 try {
                     appUpdateManager.startUpdateFlowForResult(
-                        appUpdateInfo,
-                        AppUpdateType.FLEXIBLE,
-                        this,
-                        0x01
+                            appUpdateInfo,
+                            AppUpdateType.FLEXIBLE,
+                            this,
+                            0x01
                     )
                 } catch (ignored: IntentSender.SendIntentException) {
                 }
@@ -438,27 +446,27 @@ class MainActivity : BlazeBaseActivity() {
         if (System.currentTimeMillis() - lastTime > INTERVAL_24_HOURS) {
             defaultSharedPreferences.putLong(PREF_CHECK_STORAGE, System.currentTimeMillis())
             checkStorageNotLow(
-                {
-                    alertDialogBuilder()
-                        .setTitle(R.string.storage_low_title)
-                        .setMessage(R.string.storage_low_message)
-                        .setCancelable(false)
-                        .setNegativeButton(getString(R.string.know)) { dialog, _ ->
-                            dialog.dismiss()
-                        }
-                        .show()
-                },
-                {
-                }
+                    {
+                        alertDialogBuilder()
+                                .setTitle(R.string.storage_low_title)
+                                .setMessage(R.string.storage_low_message)
+                                .setCancelable(false)
+                                .setNegativeButton(getString(R.string.know)) { dialog, _ ->
+                                    dialog.dismiss()
+                                }
+                                .show()
+                    },
+                    {
+                    }
             )
         }
     }
 
     private fun popupSnackbarForCompleteUpdate() {
         Snackbar.make(
-            binding.rootView,
-            getString(R.string.update_downloaded),
-            Snackbar.LENGTH_INDEFINITE
+                binding.rootView,
+                getString(R.string.update_downloaded),
+                Snackbar.LENGTH_INDEFINITE
         ).apply {
             setAction(getString(R.string.restart)) { appUpdateManager.completeUpdate() }
             setActionTextColor(getColor(R.color.colorAccent))
@@ -467,15 +475,15 @@ class MainActivity : BlazeBaseActivity() {
     }
 
     private fun refreshStickerAlbum() =
-        runIntervalTask(REFRESH_STICKER_ALBUM_PRE_KEY, INTERVAL_24_HOURS) {
-            jobManager.addJobInBackground(RefreshStickerAlbumJob())
-        }
+            runIntervalTask(REFRESH_STICKER_ALBUM_PRE_KEY, INTERVAL_24_HOURS) {
+                jobManager.addJobInBackground(RefreshStickerAlbumJob())
+            }
 
     @Suppress("SameParameterValue")
     private fun runIntervalTask(
-        spKey: String,
-        interval: Long,
-        task: () -> Unit
+            spKey: String,
+            interval: Long,
+            task: () -> Unit
     ) {
         val cur = System.currentTimeMillis()
         val last = defaultSharedPreferences.getLong(spKey, 0)
@@ -520,7 +528,7 @@ class MainActivity : BlazeBaseActivity() {
             val userId = intent.getStringExtra(TRANSFER)
             if (Session.getAccount()?.hasPin == true) {
                 TransferFragment.newInstance(userId, supportSwitchAsset = true)
-                    .showNow(supportFragmentManager, TransferFragment.TAG)
+                        .showNow(supportFragmentManager, TransferFragment.TAG)
             } else {
                 toast(R.string.transfer_without_pin)
             }
@@ -533,47 +541,47 @@ class MainActivity : BlazeBaseActivity() {
                 var conversation = conversationDao.findConversationById(conversationId)
                 if (conversation == null) {
                     val response =
-                        conversationService.getConversation(conversationId).execute().body()
+                            conversationService.getConversation(conversationId).execute().body()
                     if (response != null && response.isSuccess) {
                         response.data?.let { data ->
                             var ownerId: String = data.creatorId
                             if (data.category == ConversationCategory.CONTACT.name) {
                                 ownerId =
-                                    data.participants.find { p -> p.userId != Session.getAccountId() }!!.userId
+                                        data.participants.find { p -> p.userId != Session.getAccountId() }!!.userId
                             } else if (data.category == ConversationCategory.GROUP.name) {
                                 ownerId = data.creatorId
                             }
                             var c = conversationDao.findConversationById(data.conversationId)
                             if (c == null) {
                                 c = Conversation(
-                                    data.conversationId,
-                                    ownerId,
-                                    data.category,
-                                    data.name,
-                                    data.iconUrl,
-                                    data.announcement,
-                                    data.codeUrl,
-                                    "",
-                                    data.createdAt,
-                                    null,
-                                    null,
-                                    null,
-                                    0,
-                                    ConversationStatus.SUCCESS.ordinal,
-                                    null
+                                        data.conversationId,
+                                        ownerId,
+                                        data.category,
+                                        data.name,
+                                        data.iconUrl,
+                                        data.announcement,
+                                        data.codeUrl,
+                                        "",
+                                        data.createdAt,
+                                        null,
+                                        null,
+                                        null,
+                                        0,
+                                        ConversationStatus.SUCCESS.ordinal,
+                                        null
                                 )
                                 conversation = c
                                 conversationDao.insert(c)
                             } else {
                                 conversationDao.updateConversation(
-                                    data.conversationId,
-                                    ownerId,
-                                    data.category,
-                                    data.name,
-                                    data.announcement,
-                                    data.muteUntil,
-                                    data.createdAt,
-                                    ConversationStatus.SUCCESS.ordinal
+                                        data.conversationId,
+                                        ownerId,
+                                        data.category,
+                                        data.name,
+                                        data.announcement,
+                                        data.muteUntil,
+                                        data.createdAt,
+                                        ConversationStatus.SUCCESS.ordinal
                                 )
                             }
 
@@ -581,7 +589,7 @@ class MainActivity : BlazeBaseActivity() {
                             val userIdList = mutableListOf<String>()
                             for (p in data.participants) {
                                 val item =
-                                    Participant(conversationId, p.userId, p.role, p.createdAt!!)
+                                        Participant(conversationId, p.userId, p.role, p.createdAt!!)
                                 if (p.role == ParticipantRole.OWNER.name) {
                                     participants.add(0, item)
                                 } else {
@@ -606,8 +614,8 @@ class MainActivity : BlazeBaseActivity() {
                     var user = userDao.findPlainUserByConversationId(conversationId)
                     if (user == null) {
                         val response =
-                            userService.getUsers(arrayListOf(conversation!!.ownerId!!)).execute()
-                                .body()
+                                userService.getUsers(arrayListOf(conversation!!.ownerId!!)).execute()
+                                        .body()
                         if (response != null && response.isSuccess) {
                             response.data?.let { data ->
                                 for (u in data) {
@@ -622,17 +630,17 @@ class MainActivity : BlazeBaseActivity() {
                 runOnUiThread { alertDialog?.dismiss() }
                 innerIntent
             }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
-                .autoDispose(stopScope).subscribe(
-                    {
-                        it?.let { intent ->
-                            this.startActivity(intent)
-                        }
-                    },
-                    {
-                        alertDialog?.dismiss()
-                        ErrorHandler.handleError(it)
-                    }
-                )
+                    .autoDispose(stopScope).subscribe(
+                            {
+                                it?.let { intent ->
+                                    this.startActivity(intent)
+                                }
+                            },
+                            {
+                                alertDialog?.dismiss()
+                                ErrorHandler.handleError(it)
+                            }
+                    )
         }
     }
 
@@ -653,7 +661,7 @@ class MainActivity : BlazeBaseActivity() {
         }
         binding.searchBar.setOnConfirmClickListener {
             val circlesFragment =
-                supportFragmentManager.findFragmentByTag(CirclesFragment.TAG) as CirclesFragment
+                    supportFragmentManager.findFragmentByTag(CirclesFragment.TAG) as CirclesFragment
             circlesFragment.cancelSort()
             binding.searchBar.actionVa.showPrevious()
         }
@@ -665,22 +673,22 @@ class MainActivity : BlazeBaseActivity() {
         binding.searchBar.mOnQueryTextListener = object : MaterialSearchView.OnQueryTextListener {
             override fun onQueryTextChange(newText: String): Boolean {
                 (supportFragmentManager.findFragmentByTag(SearchFragment.TAG) as? SearchFragment)?.setQueryText(
-                    newText
+                        newText
                 )
                 return true
             }
         }
 
         binding.searchBar.setSearchViewListener(
-            object : MaterialSearchView.SearchViewListener {
-                override fun onSearchViewClosed() {
-                    navigationController.hideSearch()
-                }
+                object : MaterialSearchView.SearchViewListener {
+                    override fun onSearchViewClosed() {
+                        navigationController.hideSearch()
+                    }
 
-                override fun onSearchViewOpened() {
-                    navigationController.showSearch()
+                    override fun onSearchViewOpened() {
+                        navigationController.showSearch()
+                    }
                 }
-            }
         )
         binding.searchBar.hideAction = {
             (supportFragmentManager.findFragmentByTag(CirclesFragment.TAG) as? CirclesFragment)?.cancelSort()
@@ -748,7 +756,7 @@ class MainActivity : BlazeBaseActivity() {
         lifecycleScope.launch {
             userRepo.findCircleItemByCircleIdSuspend(circleId)?.let { circleItem ->
                 val circlesFragment =
-                    supportFragmentManager.findFragmentByTag(CirclesFragment.TAG) as CirclesFragment?
+                        supportFragmentManager.findFragmentByTag(CirclesFragment.TAG) as CirclesFragment?
                 circlesFragment?.edit(circleItem)
             }
         }
@@ -793,24 +801,24 @@ class MainActivity : BlazeBaseActivity() {
                 setCancelable(false)
             }
             handleMixinResponse(
-                switchContext = Dispatchers.IO,
-                invokeNetwork = {
-                    userRepo.createCircle(name)
-                },
-                successBlock = { response ->
-                    response.data?.let { circle ->
-                        userRepo.insertCircle(circle)
-                        openCircleEdit(circle.circleId)
+                    switchContext = Dispatchers.IO,
+                    invokeNetwork = {
+                        userRepo.createCircle(name)
+                    },
+                    successBlock = { response ->
+                        response.data?.let { circle ->
+                            userRepo.insertCircle(circle)
+                            openCircleEdit(circle.circleId)
+                        }
+                    },
+                    exceptionBlock = {
+                        dialog.dismiss()
+                        return@handleMixinResponse false
+                    },
+                    failureBlock = {
+                        dialog.dismiss()
+                        return@handleMixinResponse false
                     }
-                },
-                exceptionBlock = {
-                    dialog.dismiss()
-                    return@handleMixinResponse false
-                },
-                failureBlock = {
-                    dialog.dismiss()
-                    return@handleMixinResponse false
-                }
             )
             dialog.dismiss()
         }
@@ -818,13 +826,13 @@ class MainActivity : BlazeBaseActivity() {
 
     override fun onBackPressed() {
         val searchMessageFragment =
-            supportFragmentManager.findFragmentByTag(SearchMessageFragment.TAG)
+                supportFragmentManager.findFragmentByTag(SearchMessageFragment.TAG)
         val searchSingleFragment =
-            supportFragmentManager.findFragmentByTag(SearchSingleFragment.TAG)
+                supportFragmentManager.findFragmentByTag(SearchSingleFragment.TAG)
         val circlesFragment =
-            supportFragmentManager.findFragmentByTag(CirclesFragment.TAG) as BaseFragment
+                supportFragmentManager.findFragmentByTag(CirclesFragment.TAG) as BaseFragment
         val conversationCircleEditFragment =
-            supportFragmentManager.findFragmentByTag(ConversationCircleEditFragment.TAG)
+                supportFragmentManager.findFragmentByTag(ConversationCircleEditFragment.TAG)
         when {
             searchMessageFragment != null -> super.onBackPressed()
             searchSingleFragment != null -> super.onBackPressed()
@@ -857,8 +865,8 @@ class MainActivity : BlazeBaseActivity() {
         }
 
         fun showFromShortcut(
-            activity: Activity,
-            intent: Intent
+                activity: Activity,
+                intent: Intent
         ) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
             activity.startActivity(intent)

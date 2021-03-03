@@ -29,5 +29,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <one.mixin.android.widget.ad.AdView
+        android:id="@+id/v_ad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="33dp"
+        android:background="@drawable/bg_ffffff_12_12_12_12"
+        android:visibility="gone" />
+
 </FrameLayout>
 

@@ -2,9 +2,8 @@ package one.mixin.android.ad
 
 import android.content.Context
 import android.util.Log
-import android.view.View
 import android.webkit.JavascriptInterface
-import com.google.gson.JsonObject
+import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,9 +24,11 @@ object AdHttpHelper {
     lateinit var scope: CoroutineScope
     lateinit var context: Context
     lateinit var adView: AdView
-    fun init(scope: CoroutineScope, context: Context) {
+    lateinit var activity: FragmentActivity
+    fun init(scope: CoroutineScope, context: Context, activity: FragmentActivity) {
         this.scope = scope
         this.context = context
+        this.activity = activity
     }
 
     private val httpclient by lazy {
@@ -42,7 +43,7 @@ object AdHttpHelper {
     private fun getAd(id: String): String? {
 
         val request: Request = Request.Builder()
-                // TODO: 2021/3/3 change
+                // TODO: 2021/3/3 change  533b88faa59a941fb6f27f2d33a1d13f 无数据返回
 //                .url(BASE_URL + id)
                 .url("https://xuexi-courses-api.firesbox.com/v1/track/979d5213e70bf63093824c2f531db88f")
                 .build()
@@ -73,11 +74,12 @@ object AdHttpHelper {
                         val invitationCode = jsonObject.optString("invitation_code")
                         if (code != 100400) {
                             val data = AdBean(groupName, groupId, groupAppId, groupDesc, groupIcon, inviterName, inviterId, membersCount, avatarUrl, invitationCode)
-                            adView.bindData(data)
-                            adView.visibility = View.VISIBLE
+                            val adDialog = AdDialogFragment()
+                            adDialog.showNow(activity.supportFragmentManager, "adDialog")
+                            adDialog.bindData(data)
                         }
                     } catch (e: Exception) {
-
+                        e.printStackTrace()
                     }
 
                 }

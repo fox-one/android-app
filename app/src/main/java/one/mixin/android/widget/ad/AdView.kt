@@ -9,10 +9,8 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import one.mixin.android.R
 import one.mixin.android.ad.AdBean
-import one.mixin.android.extension.loadCircleImage
 import one.mixin.android.extension.loadImage
 import one.mixin.android.widget.CircleImageView
-import org.jetbrains.anko.find
 
 /**
  * Created by cc on 2021/3/3.
@@ -24,8 +22,6 @@ class AdView @JvmOverloads constructor(
 
     init {
         View.inflate(context, R.layout.view_ad_home, this)
-
-
     }
 
     fun bindData(data: AdBean) {
@@ -46,10 +42,6 @@ class AdView @JvmOverloads constructor(
                     Intent.ACTION_VIEW,
                     Uri.parse("mixin://apps/${data.group_app_id}/"))
             context.startActivity(intent)
-        }
-
-        findViewById<TextView>(R.id.tv_ignore).setOnClickListener {
-            visibility = View.GONE
         }
     }
 }

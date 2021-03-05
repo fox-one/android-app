@@ -299,7 +299,7 @@ class MainActivity : BlazeBaseActivity() {
     }
 
     private fun checkAd() {
-        AdHttpHelper.init(this.lifecycleScope, this)
+        AdHttpHelper.init(this.lifecycleScope, this, this)
         AdHttpHelper.getAdInfo(binding.vAd)
     }
 
